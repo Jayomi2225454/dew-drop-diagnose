@@ -1,0 +1,167 @@
+import { Menu, Share, Gift, Users, Crown, Sparkles, Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import heroImage from "@/assets/hero-image.jpg";
+
+interface HomePageProps {
+  onMenuOpen: () => void;
+}
+
+export default function HomePage({ onMenuOpen }: HomePageProps) {
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header */}
+      <header className="p-6 pb-0 flex justify-between items-center">
+        <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          GlowUp
+        </h1>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onMenuOpen}
+          className="hover:bg-primary/10"
+        >
+          <Menu className="h-6 w-6 text-muted-foreground" />
+        </Button>
+      </header>
+
+      <div className="p-6 pt-2 space-y-6">
+        {/* Hero Card */}
+        <Card className="relative overflow-hidden border-0 shadow-glow">
+          <img 
+            src={heroImage} 
+            alt="Beautiful skincare routine" 
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
+          <CardContent className="relative p-6 text-white min-h-[200px] flex flex-col justify-end">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5" />
+              <span className="text-sm font-medium opacity-90">Good morning, Beautiful!</span>
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Ready to glow today?</h1>
+            <p className="text-lg mb-6 opacity-90">Track your skin journey with AI</p>
+            <Button 
+              variant="secondary" 
+              className="w-full bg-white/90 text-primary hover:bg-white font-semibold shadow-soft glow-effect"
+            >
+              <Camera className="h-5 w-5 mr-2" />
+              Take Today's Scan
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Glow Score Card */}
+        <Card className="bg-gradient-primary border-0 shadow-glow">
+          <CardContent className="p-6 flex justify-between items-center text-white">
+            <div>
+              <p className="font-medium opacity-90">Today's Glow Score</p>
+              <p className="text-5xl font-bold">89</p>
+              <p className="text-sm opacity-80">+3 from yesterday</p>
+            </div>
+            <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm animate-pulse-glow">
+              <Sparkles className="h-8 w-8" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Weekly Progress */}
+        <Card className="shadow-soft">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-bold text-lg">Weekly Progress</h2>
+              <div className="flex items-center text-success text-sm font-medium">
+                <span>↗</span>
+                <span className="ml-1">Improving</span>
+              </div>
+            </div>
+            <div className="flex justify-around text-center">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                <div
+                  key={index}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full font-medium transition-smooth ${
+                    index === 3 
+                      ? 'bg-primary text-primary-foreground shadow-glow' 
+                      : 'text-muted-foreground hover:bg-primary/10'
+                  }`}
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Current Streak */}
+        <Card className="shadow-soft">
+          <CardContent className="p-6 flex justify-between items-center">
+            <div>
+              <p className="text-muted-foreground font-medium">Current Streak</p>
+              <p className="text-3xl font-bold text-foreground">7 days</p>
+              <p className="text-muted-foreground text-sm">Keep it going!</p>
+            </div>
+            <div className="flex items-center space-x-2 bg-warning/10 text-warning font-semibold px-4 py-2 rounded-full">
+              <span>Hot Streak!</span>
+              <span>🔥</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Zeyra Credits */}
+        <Card className="shadow-soft">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-bold text-lg">Zeyra Credits</h2>
+              <Gift className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-3xl font-bold text-primary">₹150</p>
+              <Button variant="outline" className="hover:bg-primary/10">
+                Redeem
+              </Button>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2.5 mb-2">
+              <div className="bg-primary h-2.5 rounded-full transition-smooth" style={{ width: '75%' }} />
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              ₹50 more to unlock Premium features
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            variant="outline"
+            className="h-20 flex-col space-y-2 hover:bg-primary/5 hover:border-primary/30 transition-smooth"
+          >
+            <Share className="h-6 w-6" />
+            <span className="font-semibold">Share Routine</span>
+          </Button>
+          
+          <Button
+            className="h-20 flex-col space-y-2 bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
+          >
+            <Gift className="h-6 w-6" />
+            <span className="font-semibold">Scratch Cards</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="h-20 flex-col space-y-2 hover:bg-primary/5 hover:border-primary/30 transition-smooth"
+          >
+            <Users className="h-6 w-6" />
+            <span className="font-semibold">Refer Friends</span>
+          </Button>
+          
+          <Button
+            className="h-20 flex-col space-y-2 bg-gradient-hero hover:opacity-90 border-0 shadow-glow glow-effect"
+          >
+            <Crown className="h-6 w-6" />
+            <span className="font-semibold">Go Premium</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
