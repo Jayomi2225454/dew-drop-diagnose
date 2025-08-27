@@ -39,7 +39,7 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
           contents: [{
             parts: [
               {
-                text: "Analyze this facial image for skincare assessment. Provide specific recommendations for: 1) Skin type identification 2) Visible concerns (acne, wrinkles, dark spots, etc.) 3) Personalized skincare routine recommendations 4) Product suggestions 5) Lifestyle tips. Be encouraging and professional. Format the response in a clear, easy-to-read manner."
+                text: "You are a professional skincare expert AI. Analyze this facial image for skincare assessment. Even if the lighting isn't perfect, do your best to provide helpful advice. Please provide: 1) Skin type assessment (oily, dry, combination, sensitive) 2) Any visible skin concerns you can identify 3) A personalized skincare routine (morning & evening) 4) Product recommendations with specific ingredients 5) Lifestyle and dietary tips for healthy skin. Be encouraging, positive, and professional. If the image quality makes specific analysis difficult, provide general skincare advice based on common skin needs. Format your response clearly with headings and bullet points."
               },
               {
                 inline_data: {
@@ -50,10 +50,10 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
             ]
           }],
           generationConfig: {
-            temperature: 0.4,
-            topK: 32,
-            topP: 1,
-            maxOutputTokens: 1000,
+            temperature: 0.3,
+            topK: 40,
+            topP: 0.8,
+            maxOutputTokens: 1500,
           }
         }),
       });
@@ -101,7 +101,11 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' } 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       
       // Create video element to capture frame
@@ -110,20 +114,28 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
       video.play();
       
       video.addEventListener('loadedmetadata', () => {
-        // Create canvas to capture frame
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(video, 0, 0);
-        
-        // Stop stream
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Get image data
-        const imageDataUrl = canvas.toDataURL('image/jpeg');
-        setCapturedImage(imageDataUrl);
+        // Wait a moment for the camera to adjust
+        setTimeout(() => {
+          // Create canvas to capture frame with better quality
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Improve image quality
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(video, 0, 0);
+          }
+          
+          // Stop stream
+          stream.getTracks().forEach(track => track.stop());
+          
+          // Get image data with higher quality
+          const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          setCapturedImage(imageDataUrl);
+        }, 1000); // Wait 1 second for camera to adjust lighting
       });
       
     } catch (error) {
