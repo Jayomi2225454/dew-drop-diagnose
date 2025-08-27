@@ -13,6 +13,14 @@ interface ScanPageProps {
 export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [answers, setAnswers] = useState({
+    age: '',
+    skinType: '',
+    concerns: '',
+    currentRoutine: '',
+    lifestyle: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Hardcoded API key
@@ -30,6 +38,26 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
       // Convert data URL to base64
       const base64Image = imageDataUrl.split(',')[1];
       
+      // Create personalized prompt with questionnaire data
+      const personalizedPrompt = `You are a professional skincare expert AI. Analyze this facial image for skincare assessment.
+
+USER INFORMATION:
+- Age: ${answers.age || 'Not specified'}
+- Current skin type belief: ${answers.skinType || 'Not specified'}
+- Main skin concerns: ${answers.concerns || 'Not specified'}
+- Current routine: ${answers.currentRoutine || 'Not specified'}
+- Lifestyle factors: ${answers.lifestyle || 'Not specified'}
+
+Based on the image analysis AND the user's information above, provide:
+1) Professional skin type assessment (consider their current belief but give your expert opinion)
+2) Visible skin concerns you can identify from the image
+3) Personalized skincare routine (morning & evening) tailored to their age, concerns, and current routine
+4) Specific product recommendations with ingredients that address their concerns
+5) Lifestyle and dietary improvements based on their current habits
+6) Timeline expectations for improvement
+
+Be encouraging, positive, and professional. Address their specific concerns and build upon their current routine if it's good, or suggest improvements. Format your response clearly with headings and bullet points.`;
+      
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
         headers: {
@@ -39,7 +67,7 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
           contents: [{
             parts: [
               {
-                text: "You are a professional skincare expert AI. Analyze this facial image for skincare assessment. Even if the lighting isn't perfect, do your best to provide helpful advice. Please provide: 1) Skin type assessment (oily, dry, combination, sensitive) 2) Any visible skin concerns you can identify 3) A personalized skincare routine (morning & evening) 4) Product recommendations with specific ingredients 5) Lifestyle and dietary tips for healthy skin. Be encouraging, positive, and professional. If the image quality makes specific analysis difficult, provide general skincare advice based on common skin needs. Format your response clearly with headings and bullet points."
+                text: personalizedPrompt
               },
               {
                 inline_data: {
@@ -53,7 +81,7 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
             temperature: 0.3,
             topK: 40,
             topP: 0.8,
-            maxOutputTokens: 1500,
+            maxOutputTokens: 2000,
           }
         }),
       });
@@ -70,8 +98,16 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
       
       toast.success("✨ Skin analysis complete! Check your AI chat for detailed recommendations.");
       
-      // Reset the captured image
+      // Reset states
       setCapturedImage(null);
+      setShowQuestionnaire(false);
+      setAnswers({
+        age: '',
+        skinType: '',
+        concerns: '',
+        currentRoutine: '',
+        lifestyle: ''
+      });
       
     } catch (error) {
       console.error('Analysis error:', error);
@@ -79,6 +115,14 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleQuestionnaireSubmit = () => {
+    if (!answers.age || !answers.skinType || !answers.concerns) {
+      toast.error("Please fill in the required fields (age, skin type, and concerns)");
+      return;
+    }
+    analyzeImageWithGemini(capturedImage!);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,7 +221,7 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
         {/* Camera/Upload Area */}
         <Card className="relative overflow-hidden border-2 border-dashed border-primary/30 bg-primary/5">
           <CardContent className="p-8">
-            {capturedImage ? (
+            {capturedImage && !showQuestionnaire ? (
               <div className="text-center space-y-4">
                 <img 
                   src={capturedImage} 
@@ -193,25 +237,16 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
                     Retake
                   </Button>
                   <Button
-                    onClick={() => analyzeImageWithGemini(capturedImage)}
-                    disabled={isAnalyzing || !geminiApiKey.trim()}
+                    onClick={() => setShowQuestionnaire(true)}
+                    disabled={isAnalyzing}
                     className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
                   >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Analyze Skin
-                      </>
-                    )}
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Continue to Questions
                   </Button>
                 </div>
               </div>
-            ) : (
+            ) : !capturedImage ? (
               <div className="text-center space-y-6">
                 <div className="w-32 h-32 mx-auto border-2 border-dashed border-primary/50 rounded-full flex items-center justify-center bg-primary/10">
                   <Camera className="h-12 w-12 text-primary" />
@@ -239,9 +274,128 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
           </CardContent>
         </Card>
+
+        {/* Questionnaire */}
+        {showQuestionnaire && (
+          <Card className="shadow-soft">
+            <CardContent className="p-6">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Tell us about your skin
+              </h3>
+              <p className="text-muted-foreground mb-6 text-sm">
+                Help us provide more personalized recommendations by answering these questions.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Age Range <span className="text-destructive">*</span>
+                  </label>
+                  <select 
+                    value={answers.age} 
+                    onChange={(e) => setAnswers({...answers, age: e.target.value})}
+                    className="w-full p-3 border border-border rounded-md bg-background"
+                  >
+                    <option value="">Select age range</option>
+                    <option value="13-17">13-17</option>
+                    <option value="18-24">18-24</option>
+                    <option value="25-34">25-34</option>
+                    <option value="35-44">35-44</option>
+                    <option value="45-54">45-54</option>
+                    <option value="55+">55+</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    What do you think your skin type is? <span className="text-destructive">*</span>
+                  </label>
+                  <select 
+                    value={answers.skinType} 
+                    onChange={(e) => setAnswers({...answers, skinType: e.target.value})}
+                    className="w-full p-3 border border-border rounded-md bg-background"
+                  >
+                    <option value="">Select skin type</option>
+                    <option value="Oily">Oily</option>
+                    <option value="Dry">Dry</option>
+                    <option value="Combination">Combination</option>
+                    <option value="Sensitive">Sensitive</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Not sure">Not sure</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    What are your main skin concerns? <span className="text-destructive">*</span>
+                  </label>
+                  <textarea 
+                    value={answers.concerns} 
+                    onChange={(e) => setAnswers({...answers, concerns: e.target.value})}
+                    placeholder="e.g., acne, blackheads, dark spots, wrinkles, dryness, oiliness..."
+                    className="w-full p-3 border border-border rounded-md bg-background h-20 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    What's your current skincare routine?
+                  </label>
+                  <textarea 
+                    value={answers.currentRoutine} 
+                    onChange={(e) => setAnswers({...answers, currentRoutine: e.target.value})}
+                    placeholder="e.g., face wash in morning, moisturizer, sunscreen..."
+                    className="w-full p-3 border border-border rounded-md bg-background h-20 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Lifestyle factors
+                  </label>
+                  <textarea 
+                    value={answers.lifestyle} 
+                    onChange={(e) => setAnswers({...answers, lifestyle: e.target.value})}
+                    placeholder="e.g., diet, sleep habits, stress levels, exercise, makeup use..."
+                    className="w-full p-3 border border-border rounded-md bg-background h-20 resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowQuestionnaire(false)}
+                  disabled={isAnalyzing}
+                  className="flex-1"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleQuestionnaireSubmit}
+                  disabled={isAnalyzing}
+                  className="flex-1 bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Get My Analysis
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tips Card */}
         <Card className="shadow-soft">
