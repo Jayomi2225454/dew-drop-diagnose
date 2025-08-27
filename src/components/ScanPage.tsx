@@ -13,8 +13,10 @@ interface ScanPageProps {
 export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [geminiApiKey, setGeminiApiKey] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Hardcoded API key
+  const geminiApiKey = "AIzaSyB1FoeIdgLNsFlQGNDscaDdxT6rEFskwX4";
 
   const analyzeImageWithGemini = async (imageDataUrl: string) => {
     if (!geminiApiKey.trim()) {
@@ -146,32 +148,6 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
       </header>
 
       <div className="p-6 pt-2 space-y-6">
-        {/* API Key Input */}
-        <Card className="shadow-soft border-primary/20">
-          <CardContent className="p-4">
-            <label className="block text-sm font-medium mb-2 text-foreground">
-              Gemini API Key (Required for AI Analysis)
-            </label>
-            <Input
-              type="password"
-              placeholder="Enter your Gemini API key..."
-              value={geminiApiKey}
-              onChange={(e) => setGeminiApiKey(e.target.value)}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              Get your free API key from{" "}
-              <a 
-                href="https://aistudio.google.com/app/apikey" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Google AI Studio
-              </a>
-            </p>
-          </CardContent>
-        </Card>
 
         {/* Intro Text */}
         <div className="text-center">
