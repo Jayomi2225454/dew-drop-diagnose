@@ -17,6 +17,26 @@ interface AIChatPageProps {
   analysisMessage?: { imageUrl: string; analysis: string } | null;
 }
 
+// Helper function to convert image to base64
+const imageToBase64 = async (imageUrl: string): Promise<string> => {
+  try {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        resolve(base64.split(',')[1]); // Remove data:image/jpeg;base64, prefix
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return '';
+  }
+};
+
 export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -27,6 +47,8 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
     },
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentImageContext, setCurrentImageContext] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,6 +62,7 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
   // Handle new analysis message
   useEffect(() => {
     if (analysisMessage) {
+      setCurrentImageContext(analysisMessage.imageUrl);
       const newMessages: Message[] = [
         {
           id: Date.now().toString(),
@@ -60,8 +83,8 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
     }
   }, [analysisMessage]);
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -72,17 +95,82 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
+    try {
+      const GEMINI_API_KEY = "AIzaSyB1FoeIdgLNsFlQGNDscaDdxT6rEFskwX4";
+      
+      let requestBody: any = {
+        contents: [{
+          parts: [{
+            text: `You are Zara, a professional skincare expert AI assistant. Answer the user's skincare question in a helpful, friendly, and professional manner. 
+
+${currentImageContext ? 'You have access to the user\'s skin image that was previously analyzed. Use this context to provide personalized advice.' : ''}
+
+User question: ${inputValue}
+
+Provide a clear, helpful response without using asterisks (*) or special formatting symbols. Use plain text with proper paragraphs.`
+          }]
+        }]
+      };
+
+      // If we have image context, include it in the request
+      if (currentImageContext) {
+        try {
+          const base64Image = await imageToBase64(currentImageContext);
+          if (base64Image) {
+            requestBody.contents[0].parts.unshift({
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: base64Image
+              }
+            });
+          }
+        } catch (error) {
+          console.log('Could not include image in request:', error);
+        }
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.candidates[0].content.parts[0].text.replace(/\*\*/g, '').replace(/\*/g, ''),
+          sender: "ai",
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiResponse]);
+      } else {
+        throw new Error('Invalid response from Gemini API');
+      }
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Thank you for your question! I'm here to help with your skincare journey. For the most accurate and personalized advice, I recommend taking a skin scan so I can analyze your specific concerns and provide tailored recommendations.",
+        text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment. In the meantime, I recommend maintaining a consistent skincare routine and staying hydrated!",
         sender: "ai",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formatTimestamp = (date: Date) => {
@@ -176,9 +264,14 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
           <Button
             onClick={handleSend}
             size="icon"
-            className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow rounded-full"
+            disabled={isLoading}
+            className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow rounded-full disabled:opacity-50"
           >
-            <Send className="h-4 w-4" />
+            {isLoading ? (
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
