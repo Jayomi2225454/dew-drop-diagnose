@@ -105,11 +105,13 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
           parts: [{
             text: `You are Zara, a professional skincare expert AI assistant. Answer the user's skincare question in a helpful, friendly, and professional manner. 
 
+IMPORTANT: Keep your responses concise and easy to read (2-3 short paragraphs maximum). Focus on the most important information first. If the user wants more details, they can ask follow-up questions.
+
 ${currentImageContext ? 'You have access to the user\'s skin image that was previously analyzed. Use this context to provide personalized advice.' : ''}
 
 User question: ${inputValue}
 
-Provide a clear, helpful response without using asterisks (*) or special formatting symbols. Use plain text with proper paragraphs.`
+Provide a clear, helpful response without using asterisks (*), bullets, or special formatting symbols. Use plain text with short paragraphs. End with "Ask me if you need more details about any specific point!"`
           }]
         }]
       };
