@@ -41,7 +41,7 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hi! I'm Zara, your AI skincare assistant. I can help you with skincare routines, product recommendations, and answer any beauty questions you have. How can I assist you today?",
+      text: "Hi! I'm SkinTell, your AI skincare assistant. I can help you with skincare routines, product recommendations, and answer any beauty questions you have. How can I assist you today?",
       sender: "ai",
       timestamp: new Date(),
     },
@@ -103,7 +103,7 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
       let requestBody: any = {
         contents: [{
           parts: [{
-            text: `You are Zara, a professional skincare expert AI assistant. Answer the user's skincare question in a helpful, friendly, and professional manner. 
+            text: `You are SkinTell, a professional skincare expert AI assistant. Answer the user's skincare question in a helpful, friendly, and professional manner. 
 
 IMPORTANT: Keep your responses concise and easy to read (2-3 short paragraphs maximum). Focus on the most important information first. If the user wants more details, they can ask follow-up questions.
 
@@ -188,7 +188,7 @@ Provide a clear, helpful response without using asterisks (*), bullets, or speci
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-foreground text-lg">Zara AI Assistant</h1>
+            <h1 className="font-bold text-foreground text-lg">SkinTell AI Assistant</h1>
             <p className="text-sm text-muted-foreground">Your personal skincare expert</p>
           </div>
         </div>
@@ -265,7 +265,7 @@ Provide a clear, helpful response without using asterisks (*), bullets, or speci
                 handleSend();
               }
             }}
-            placeholder="Ask Zara anything about skincare..."
+            placeholder="Ask SkinTell anything about skincare..."
             className="flex-1 bg-transparent border-0 focus:outline-none resize-none px-4 py-3 text-sm min-h-[44px] max-h-32 placeholder:text-muted-foreground"
             rows={1}
             style={{

@@ -13,7 +13,7 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
       {/* Header */}
       <header className="p-6 pb-0 flex justify-between items-center">
         <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-          GlowUp
+          SkinTell
         </h1>
         <Button 
           variant="ghost" 
