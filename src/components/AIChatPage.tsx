@@ -254,25 +254,40 @@ Provide a clear, helpful response without using asterisks (*), bullets, or speci
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-surface border-t border-border flex-shrink-0">
-        <div className="flex items-center bg-muted rounded-full p-1 gap-2">
-          <Input
+      <div className="p-4 bg-surface border-t border-border flex-shrink-0 mb-16">
+        <div className="flex items-end bg-muted rounded-2xl p-2 gap-2 shadow-soft">
+          <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask about skincare, routines, products..."
-            className="flex-1 bg-transparent border-0 focus-visible:ring-0 px-4"
+            onKeyPress={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Ask Zara anything about skincare..."
+            className="flex-1 bg-transparent border-0 focus:outline-none resize-none px-4 py-3 text-sm min-h-[44px] max-h-32 placeholder:text-muted-foreground"
+            rows={1}
+            style={{
+              height: 'auto',
+              minHeight: '44px'
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+            }}
           />
           <Button
             onClick={handleSend}
             size="icon"
-            disabled={isLoading}
-            className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow rounded-full disabled:opacity-50"
+            disabled={isLoading || !inputValue.trim()}
+            className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow rounded-full disabled:opacity-50 disabled:bg-muted-foreground flex-shrink-0 h-10 w-10"
           >
             {isLoading ? (
               <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-4 w-4 text-white" />
             )}
           </Button>
         </div>
