@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Menu, Send, Bot, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -17,25 +17,6 @@ interface AIChatPageProps {
   analysisMessage?: { imageUrl: string; analysis: string } | null;
 }
 
-// Helper function to convert image to base64
-const imageToBase64 = async (imageUrl: string): Promise<string> => {
-  try {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        resolve(base64.split(',')[1]); // Remove data:image/jpeg;base64, prefix
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error('Error converting image to base64:', error);
-    return '';
-  }
-};
 
 export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([
@@ -98,70 +79,41 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
     setIsLoading(true);
 
     try {
-      const GEMINI_API_KEY = "AIzaSyB1FoeIdgLNsFlQGNDscaDdxT6rEFskwX4";
+      console.log('Sending message to SkinTell AI:', inputValue);
       
-      let requestBody: any = {
-        contents: [{
-          parts: [{
-            text: `You are SkinTell AI, a professional skincare expert created by SkinTell. Answer the user's skincare question in a helpful, friendly, and professional manner. 
-
-IMPORTANT: Keep your responses concise and easy to read (2-3 short paragraphs maximum). Focus on the most important information first. If the user wants more details, they can ask follow-up questions.
-
-You are SkinTell's AI assistant, not affiliated with Google, Gemini, or any other company. You were created by SkinTell to help users with their skincare journey.
-
-${currentImageContext ? 'You have access to the user\'s skin image that was previously analyzed. Use this context to provide personalized advice.' : ''}
-
-User question: ${inputValue}
-
-Provide a clear, helpful response without using asterisks (*), bullets, or special formatting symbols. Use plain text with short paragraphs. End with "Ask me if you need more details about any specific point!"`
-          }]
-        }]
-      };
-
-      // If we have image context, include it in the request
-      if (currentImageContext) {
-        try {
-          const base64Image = await imageToBase64(currentImageContext);
-          if (base64Image) {
-            requestBody.contents[0].parts.unshift({
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: base64Image
-              }
-            });
-          }
-        } catch (error) {
-          console.log('Could not include image in request:', error);
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: inputValue,
+          imageContext: currentImageContext
         }
+      });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Failed to get AI response: ${error.message}`);
       }
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      console.log('Received response from SkinTell AI:', data);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      if (data?.success && data?.response) {
         const aiResponse: Message = {
           id: (Date.now() + 1).toString(),
-          text: data.candidates[0].content.parts[0].text.replace(/\*\*/g, '').replace(/\*/g, ''),
+          text: data.response.replace(/\*\*/g, '').replace(/\*/g, ''),
+          sender: "ai",
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiResponse]);
+      } else if (data?.fallbackResponse) {
+        // Use fallback response if available
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.fallbackResponse,
           sender: "ai",
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiResponse]);
       } else {
-        throw new Error('Invalid response from Gemini API');
+        throw new Error('Invalid response from SkinTell AI');
       }
     } catch (error) {
       console.error('Error getting AI response:', error);
