@@ -46,7 +46,7 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
               className="w-full bg-white/90 text-primary hover:bg-white font-semibold shadow-soft glow-effect"
             >
               <Camera className="h-5 w-5 mr-2" />
-              Take Today's Scan
+              It's Open to Scan
             </Button>
           </CardContent>
         </Card>
@@ -111,7 +111,7 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
         <Card className="shadow-soft">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-lg">Zeyra Credits</h2>
+              <h2 className="font-bold text-lg">SkinTell Credits</h2>
               <Gift className="h-6 w-6 text-primary" />
             </div>
             <div className="flex items-center justify-between mb-4">
