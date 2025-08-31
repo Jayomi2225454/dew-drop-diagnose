@@ -19,8 +19,18 @@ serve(async (req) => {
   }
 
   try {
-    const { message, imageContext } = await req.json();
+    // Validate API key first
+    if (!openAIApiKey) {
+      console.error('OPENAI_API_KEY environment variable is not set');
+      throw new Error('OpenAI API key is not configured');
+    }
 
+    if (!openAIApiKey.startsWith('sk-')) {
+      console.error('Invalid OpenAI API key format. Key should start with "sk-"');
+      throw new Error('Invalid OpenAI API key format');
+    }
+
+    const { message, imageContext } = await req.json();
     console.log('Received chat request:', { message, hasImageContext: !!imageContext });
 
     const messages: any[] = [
