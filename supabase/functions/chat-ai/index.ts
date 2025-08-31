@@ -3,6 +3,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
+console.log('Starting chat-ai function');
+console.log('OpenAI API Key available:', !!openAIApiKey);
+console.log('OpenAI API Key prefix:', openAIApiKey?.substring(0, 7));
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
