@@ -1,11 +1,11 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
 console.log('Starting chat-ai function');
-console.log('OpenAI API Key available:', !!openAIApiKey);
-console.log('OpenAI API Key prefix:', openAIApiKey?.substring(0, 7));
+console.log('Gemini API Key available:', !!geminiApiKey);
+console.log('Gemini API Key prefix:', geminiApiKey?.substring(0, 7));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,23 +20,20 @@ serve(async (req) => {
 
   try {
     // Validate API key first
-    if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY environment variable is not set');
-      throw new Error('OpenAI API key is not configured');
-    }
-
-    if (!openAIApiKey.startsWith('sk-')) {
-      console.error('Invalid OpenAI API key format. Key should start with "sk-"');
-      throw new Error('Invalid OpenAI API key format');
+    if (!geminiApiKey) {
+      console.error('GEMINI_API_KEY environment variable is not set');
+      throw new Error('Gemini API key is not configured');
     }
 
     const { message, imageContext } = await req.json();
     console.log('Received chat request:', { message, hasImageContext: !!imageContext });
 
-    const messages: any[] = [
-      {
-        role: 'system',
-        content: `You are SkinTell AI, a professional skincare expert created by SkinTell. Answer the user's skincare question in a helpful, friendly, and professional manner.
+    // Prepare the content for Gemini
+    let parts = [];
+    
+    // Add system instruction as first part
+    parts.push({
+      text: `You are SkinTell AI, a professional skincare expert created by SkinTell. Answer the user's skincare question in a helpful, friendly, and professional manner.
 
 IMPORTANT: Keep your responses concise and easy to read (2-3 short paragraphs maximum). Focus on the most important information first. If the user wants more details, they can ask follow-up questions.
 
@@ -45,61 +42,55 @@ You are SkinTell's AI assistant, not affiliated with Google, Gemini, or any othe
 ${imageContext ? 'You have access to the user\'s skin image that was previously analyzed. Use this context to provide personalized advice.' : ''}
 
 Provide a clear, helpful response without using asterisks (*), bullets, or special formatting symbols. Use plain text with short paragraphs. End with "Ask me if you need more details about any specific point!"`
-      }
-    ];
+    });
 
     // Add image context if provided
     if (imageContext) {
-      messages.push({
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Here is my skin image for context:'
-          },
-          {
-            type: 'image_url',
-            image_url: {
-              url: imageContext
-            }
-          }
-        ]
+      parts.push({
+        text: 'Here is my skin image for context:'
+      });
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: imageContext.split(',')[1] // Remove data:image/jpeg;base64, prefix
+        }
       });
     }
 
     // Add the current user message
-    messages.push({
-      role: 'user',
-      content: message
+    parts.push({
+      text: message
     });
 
-    console.log('Sending request to OpenAI with', messages.length, 'messages');
+    console.log('Sending request to Gemini with', parts.length, 'parts');
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.7,
+        contents: [{
+          parts: parts
+        }],
+        generationConfig: {
+          maxOutputTokens: 500,
+          temperature: 0.7,
+        }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('Gemini API error:', response.status, errorText);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('OpenAI response received successfully');
+    console.log('Gemini response received successfully');
     
-    if (data.choices && data.choices[0]?.message?.content) {
-      const aiResponse = data.choices[0].message.content;
+    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      const aiResponse = data.candidates[0].content.parts[0].text;
       
       return new Response(JSON.stringify({ 
         success: true, 
@@ -108,7 +99,7 @@ Provide a clear, helpful response without using asterisks (*), bullets, or speci
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {
-      throw new Error('Invalid response from OpenAI API');
+      throw new Error('Invalid response from Gemini API');
     }
   } catch (error) {
     console.error('Error in chat-ai function:', error);
