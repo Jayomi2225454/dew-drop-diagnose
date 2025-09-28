@@ -1,4 +1,4 @@
-import { Home, Camera, MessageCircle, Trophy } from "lucide-react";
+import { Home, Camera, MessageCircle, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -10,7 +10,7 @@ const navItems = [
   { icon: Home, label: "Home" },
   { icon: Camera, label: "Scan" },
   { icon: MessageCircle, label: "AI Chat" },
-  { icon: Trophy, label: "Challenges" },
+  { icon: ShoppingBag, label: "Shop" },
 ];
 
 export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {

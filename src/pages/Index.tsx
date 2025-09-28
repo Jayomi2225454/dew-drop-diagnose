@@ -2,7 +2,7 @@ import { useState } from "react";
 import HomePage from "@/components/HomePage";
 import ScanPage from "@/components/ScanPage";
 import AIChatPage from "@/components/AIChatPage";
-import ChallengesPage from "@/components/ChallengesPage";
+import ShopPage from "@/components/ShopPage";
 import BottomNavigation from "@/components/BottomNavigation";
 import SideMenu from "@/components/SideMenu";
 
@@ -45,7 +45,7 @@ const Index = () => {
           />
         );
       case 3:
-        return <ChallengesPage onMenuOpen={() => setIsMenuOpen(true)} />;
+        return <ShopPage onMenuOpen={() => setIsMenuOpen(true)} />;
       default:
         return <HomePage onMenuOpen={() => setIsMenuOpen(true)} />;
     }

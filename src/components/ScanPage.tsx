@@ -14,6 +14,8 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [answers, setAnswers] = useState({
     age: '',
     skinType: '',
@@ -22,9 +24,65 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
     lifestyle: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // Hardcoded API key
   const geminiApiKey = "AIzaSyB1FoeIdgLNsFlQGNDscaDdxT6rEFskwX4";
+
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+      
+      setStream(mediaStream);
+      setShowCamera(true);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      
+    } catch (error) {
+      console.error('Camera error:', error);
+      toast.error("Unable to access camera. Please upload an image instead.");
+    }
+  };
+
+  const takePicture = () => {
+    if (videoRef.current && stream) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(videoRef.current, 0, 0);
+      }
+      
+      // Stop stream
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      setShowCamera(false);
+      
+      // Get image data
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setCapturedImage(imageDataUrl);
+    }
+  };
+
+  const cancelCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setShowCamera(false);
+  };
 
   const analyzeImageWithGemini = async (imageDataUrl: string) => {
     if (!geminiApiKey.trim()) {
@@ -142,51 +200,6 @@ Be encouraging, positive, and professional. Address their specific concerns and 
     reader.readAsDataURL(file);
   };
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
-      
-      // Create video element to capture frame
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.play();
-      
-      video.addEventListener('loadedmetadata', () => {
-        // Wait a moment for the camera to adjust
-        setTimeout(() => {
-          // Create canvas to capture frame with better quality
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            // Improve image quality
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(video, 0, 0);
-          }
-          
-          // Stop stream
-          stream.getTracks().forEach(track => track.stop());
-          
-          // Get image data with higher quality
-          const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          setCapturedImage(imageDataUrl);
-        }, 1000); // Wait 1 second for camera to adjust lighting
-      });
-      
-    } catch (error) {
-      console.error('Camera error:', error);
-      toast.error("Unable to access camera. Please upload an image instead.");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -221,7 +234,33 @@ Be encouraging, positive, and professional. Address their specific concerns and 
         {/* Camera/Upload Area */}
         <Card className="relative overflow-hidden border-2 border-dashed border-primary/30 bg-primary/5">
           <CardContent className="p-8">
-            {capturedImage && !showQuestionnaire ? (
+            {showCamera ? (
+              <div className="text-center space-y-4">
+                <video 
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full max-w-sm mx-auto rounded-xl shadow-soft"
+                />
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={cancelCamera}
+                    disabled={isAnalyzing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={takePicture}
+                    disabled={isAnalyzing}
+                    className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Take Picture
+                  </Button>
+                </div>
+              </div>
+            ) : capturedImage && !showQuestionnaire ? (
               <div className="text-center space-y-4">
                 <img 
                   src={capturedImage} 
@@ -252,7 +291,7 @@ Be encouraging, positive, and professional. Address their specific concerns and 
                   <Camera className="h-12 w-12 text-primary" />
                 </div>
                 <p className="text-muted-foreground font-medium">
-                  Position your face in good lighting
+                  Position your face in good lighting and click to take picture
                 </p>
                 <div className="flex flex-col gap-3">
                   <Button
@@ -261,7 +300,7 @@ Be encouraging, positive, and professional. Address their specific concerns and 
                     disabled={isAnalyzing}
                   >
                     <Camera className="h-5 w-5 mr-2" />
-                    Take Selfie
+                    Start Camera
                   </Button>
                   <Button
                     variant="outline"

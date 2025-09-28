@@ -107,25 +107,37 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
           </CardContent>
         </Card>
 
-        {/* Zeyra Credits */}
+        {/* Featured Products */}
         <Card className="shadow-soft">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-lg">SkinTell Credits</h2>
+              <h2 className="font-bold text-lg">Featured Products</h2>
               <Gift className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-3xl font-bold text-primary">₹150</p>
-              <Button variant="outline" className="hover:bg-primary/10">
-                Redeem
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=60&h=60&fit=crop" 
+                  alt="Vitamin C Serum"
+                  className="w-12 h-12 rounded object-cover"
+                />
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">Vitamin C Serum</p>
+                  <p className="text-xs text-muted-foreground">Brightening & Antioxidant</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-primary text-sm">₹899</p>
+                  <p className="text-xs text-muted-foreground line-through">₹1299</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="w-full hover:bg-primary/10"
+                onClick={() => {/* Navigate to shop */}}
+              >
+                View All Products
               </Button>
             </div>
-            <div className="w-full bg-muted rounded-full h-2.5 mb-2">
-              <div className="bg-primary h-2.5 rounded-full transition-smooth" style={{ width: '75%' }} />
-            </div>
-            <p className="text-center text-sm text-muted-foreground">
-              ₹50 more to unlock Premium features
-            </p>
           </CardContent>
         </Card>
 
@@ -141,9 +153,10 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
           
           <Button
             className="h-20 flex-col space-y-2 bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
+            onClick={() => {/* Navigate to shop */}}
           >
             <Gift className="h-6 w-6" />
-            <span className="font-semibold">Scratch Cards</span>
+            <span className="font-semibold">Shop Now</span>
           </Button>
           
           <Button
