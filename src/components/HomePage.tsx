@@ -5,9 +5,10 @@ import heroImage from "@/assets/hero-image.jpg";
 
 interface HomePageProps {
   onMenuOpen: () => void;
+  onNavigateToShop: () => void;
 }
 
-export default function HomePage({ onMenuOpen }: HomePageProps) {
+export default function HomePage({ onMenuOpen, onNavigateToShop }: HomePageProps) {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -133,7 +134,7 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
               <Button 
                 variant="outline" 
                 className="w-full hover:bg-primary/10"
-                onClick={() => {/* Navigate to shop */}}
+                onClick={onNavigateToShop}
               >
                 View All Products
               </Button>
@@ -153,7 +154,7 @@ export default function HomePage({ onMenuOpen }: HomePageProps) {
           
           <Button
             className="h-20 flex-col space-y-2 bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
-            onClick={() => {/* Navigate to shop */}}
+            onClick={onNavigateToShop}
           >
             <Gift className="h-6 w-6" />
             <span className="font-semibold">Shop Now</span>

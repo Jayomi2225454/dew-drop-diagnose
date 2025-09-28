@@ -240,6 +240,7 @@ Be encouraging, positive, and professional. Address their specific concerns and 
                   ref={videoRef}
                   autoPlay
                   playsInline
+                  muted
                   className="w-full max-w-sm mx-auto rounded-xl shadow-soft"
                 />
                 <div className="flex gap-3 justify-center">
