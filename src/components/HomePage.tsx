@@ -6,9 +6,10 @@ import heroImage from "@/assets/hero-image.jpg";
 interface HomePageProps {
   onMenuOpen: () => void;
   onNavigateToShop: () => void;
+  onNavigateToScan: () => void;
 }
 
-export default function HomePage({ onMenuOpen, onNavigateToShop }: HomePageProps) {
+export default function HomePage({ onMenuOpen, onNavigateToShop, onNavigateToScan }: HomePageProps) {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -45,6 +46,7 @@ export default function HomePage({ onMenuOpen, onNavigateToShop }: HomePageProps
             <Button 
               variant="secondary" 
               className="w-full bg-white/90 text-primary hover:bg-white font-semibold shadow-soft glow-effect"
+              onClick={onNavigateToScan}
             >
               <Camera className="h-5 w-5 mr-2" />
               It's Open to Scan

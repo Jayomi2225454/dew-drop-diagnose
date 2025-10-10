@@ -29,7 +29,7 @@ const Index = () => {
   const renderCurrentPage = () => {
     switch (activeTab) {
       case 0:
-        return <HomePage onMenuOpen={() => setIsMenuOpen(true)} onNavigateToShop={() => setActiveTab(3)} />;
+        return <HomePage onMenuOpen={() => setIsMenuOpen(true)} onNavigateToShop={() => setActiveTab(3)} onNavigateToScan={() => setActiveTab(1)} />;
       case 1:
         return (
           <ScanPage 
@@ -47,7 +47,7 @@ const Index = () => {
       case 3:
         return <ShopPage onMenuOpen={() => setIsMenuOpen(true)} />;
       default:
-        return <HomePage onMenuOpen={() => setIsMenuOpen(true)} onNavigateToShop={() => setActiveTab(3)} />;
+        return <HomePage onMenuOpen={() => setIsMenuOpen(true)} onNavigateToShop={() => setActiveTab(3)} onNavigateToScan={() => setActiveTab(1)} />;
     }
   };
 
