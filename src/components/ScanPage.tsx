@@ -261,30 +261,34 @@ Be encouraging, positive, and professional. Address their specific concerns and 
                   </Button>
                 </div>
               </div>
-            ) : capturedImage && !showQuestionnaire ? (
+            ) : capturedImage ? (
               <div className="text-center space-y-4">
-                <img 
-                  src={capturedImage} 
-                  alt="Captured selfie" 
-                  className="w-full max-w-sm mx-auto rounded-xl shadow-soft"
-                />
-                <div className="flex gap-3 justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCapturedImage(null)}
-                    disabled={isAnalyzing}
-                  >
-                    Retake
-                  </Button>
-                  <Button
-                    onClick={() => setShowQuestionnaire(true)}
-                    disabled={isAnalyzing}
-                    className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Continue to Questions
-                  </Button>
+                <div className="w-full max-w-sm mx-auto">
+                  <img 
+                    src={capturedImage} 
+                    alt="Captured selfie" 
+                    className="w-full rounded-xl shadow-soft object-cover"
+                  />
                 </div>
+                {!showQuestionnaire && (
+                  <div className="flex gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCapturedImage(null)}
+                      disabled={isAnalyzing}
+                    >
+                      Retake
+                    </Button>
+                    <Button
+                      onClick={() => setShowQuestionnaire(true)}
+                      disabled={isAnalyzing}
+                      className="bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Continue to Questions
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : !capturedImage ? (
               <div className="text-center space-y-6">
