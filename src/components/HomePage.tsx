@@ -1,4 +1,4 @@
-import { Menu, Share, Gift, Users, Crown, Sparkles, Camera } from "lucide-react";
+import { Menu, Gift, Sparkles, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/hero-image.jpg";
@@ -77,18 +77,21 @@ export default function HomePage({ onMenuOpen, onNavigateToShop }: HomePageProps
               </div>
             </div>
             <div className="flex justify-around text-center">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                <div
-                  key={index}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full font-medium transition-smooth ${
-                    index === 3 
-                      ? 'bg-primary text-primary-foreground shadow-glow' 
-                      : 'text-muted-foreground hover:bg-primary/10'
-                  }`}
-                >
-                  {day}
-                </div>
-              ))}
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => {
+                const currentDay = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+                return (
+                  <div
+                    key={index}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full font-medium transition-smooth ${
+                      index === currentDay 
+                        ? 'bg-primary text-primary-foreground shadow-glow' 
+                        : 'text-muted-foreground hover:bg-primary/10'
+                    }`}
+                  >
+                    {day}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -142,39 +145,14 @@ export default function HomePage({ onMenuOpen, onNavigateToShop }: HomePageProps
           </CardContent>
         </Card>
 
-        {/* Action Buttons Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="h-20 flex-col space-y-2 hover:bg-primary/5 hover:border-primary/30 transition-smooth"
-          >
-            <Share className="h-6 w-6" />
-            <span className="font-semibold">Share Routine</span>
-          </Button>
-          
-          <Button
-            className="h-20 flex-col space-y-2 bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
-            onClick={onNavigateToShop}
-          >
-            <Gift className="h-6 w-6" />
-            <span className="font-semibold">Shop Now</span>
-          </Button>
-          
-          <Button
-            variant="outline"
-            className="h-20 flex-col space-y-2 hover:bg-primary/5 hover:border-primary/30 transition-smooth"
-          >
-            <Users className="h-6 w-6" />
-            <span className="font-semibold">Refer Friends</span>
-          </Button>
-          
-          <Button
-            className="h-20 flex-col space-y-2 bg-gradient-hero hover:opacity-90 border-0 shadow-glow glow-effect"
-          >
-            <Crown className="h-6 w-6" />
-            <span className="font-semibold">Go Premium</span>
-          </Button>
-        </div>
+        {/* Shop Now Button */}
+        <Button
+          className="h-20 w-full flex-col space-y-2 bg-gradient-primary hover:opacity-90 border-0 shadow-glow glow-effect"
+          onClick={onNavigateToShop}
+        >
+          <Gift className="h-6 w-6" />
+          <span className="font-semibold">Shop Now</span>
+        </Button>
       </div>
     </div>
   );
