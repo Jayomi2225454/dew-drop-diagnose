@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Menu, Camera, Upload, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,30 +25,62 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
+  // Stop camera when component unmounts or stream changes
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [stream]);
   // Hardcoded API key
   const geminiApiKey = "AIzaSyB1FoeIdgLNsFlQGNDscaDdxT6rEFskwX4";
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
-      
+      if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Camera not supported in this browser. Please upload a photo instead.");
+        return;
+      }
+      if (!window.isSecureContext && location.hostname !== 'localhost') {
+        toast.error("Camera requires HTTPS. Please use a secure URL or localhost.");
+        return;
+      }
+
+      let mediaStream: MediaStream | null = null;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'user' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+      } catch (err) {
+        // Fallback with broader constraints
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
       setStream(mediaStream);
       setShowCamera(true);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+
+      const video = videoRef.current;
+      if (video && mediaStream) {
+        video.srcObject = mediaStream;
+        video.onloadedmetadata = () => {
+          video.play().catch(() => {
+            // Some browsers require an additional user gesture
+          });
+        };
+        // Try immediate play as well
+        try { await video.play(); } catch {}
       }
-      
+
     } catch (error) {
       console.error('Camera error:', error);
-      toast.error("Unable to access camera. Please upload an image instead.");
+      toast.error("Unable to access camera. Please allow permission or upload an image.");
     }
   };
 
@@ -305,7 +337,7 @@ Be encouraging, positive, and professional. Address their specific concerns and 
                     disabled={isAnalyzing}
                   >
                     <Camera className="h-5 w-5 mr-2" />
-                    Start Camera
+                    Take Picture
                   </Button>
                   <Button
                     variant="outline"
@@ -474,6 +506,7 @@ Be encouraging, positive, and professional. Address their specific concerns and 
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          capture="user"
           onChange={handleFileUpload}
           className="hidden"
         />
