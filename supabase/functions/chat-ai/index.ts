@@ -28,76 +28,52 @@ serve(async (req) => {
     const { message, imageContext } = await req.json();
     console.log('Received chat request:', { message, hasImageContext: !!imageContext });
 
-    // Prepare the content for Gemini
-    let parts = [];
-    
-    // Add system instruction as first part
-    parts.push({
-      text: `You are SkinTell AI, a friendly and knowledgeable skincare advisor created by SkinTell. 
+    // Prepare system instruction and user content for Gemini (v1 schema)
+    const systemInstructionText = `You are SkinTell AI, a friendly, expert skincare advisor.
 
-${imageContext ? `When analyzing skin images, provide personalized advice using this EXACT structure (keep under 400 words total):
+${imageContext ? `When analyzing skin images, reply compactly (max ~250 words) with:
+- Skin Type: 1 short sentence.
+- Visible Concerns: 3–5 bullets.
+- Simple Routine: 3 steps for morning and 3 for evening (short phrases).
+- Product Tips: 3 bullets with specific ingredients.
+- Lifestyle Tip: 1 short, relevant tip.
+If the image quality is poor, say so briefly and suggest clearer photos or a dermatologist visit.` : `For general skincare questions (no images), answer in 1–2 short paragraphs (max ~140 words). Be direct and practical.`}
 
-**Skin Type Summary (1-2 sentences):** Briefly identify skin type based on image and any provided user information.
+Keep tone supportive and professional. Use concise, skimmable formatting. End with: "Ask me if you need more details about any specific point!"`;
 
-**Visible Concerns (3-5 bullet points max):** List only the most obvious concerns you can see.
-
-**Simple Skincare Routine:**
-🌞 **Morning Routine:**
-1. Step one with brief explanation
-2. Step two with brief explanation  
-3. Step three (if needed)
-
-🌙 **Evening Routine:**
-1. Step one with brief explanation
-2. Step two with brief explanation
-3. Step three (if needed)
-
-**🔑 Product Tips:**
-- Product type: Specific ingredient or product name
-- Product type: Specific ingredient or product name
-- Product type: Specific ingredient or product name
-
-**💡 Lifestyle Tip:** One brief, relevant tip about diet, sleep, or habits.
-
-IMPORTANT: Vary your recommendations based on what you see in each image. Don't give identical responses. Adapt product suggestions and concerns to the specific skin shown. If image quality is poor, note this and suggest clearer photos or dermatologist consultation.` : 'For general skincare questions without images, provide helpful advice in 2-3 concise paragraphs under 200 words.'}
-
-Be supportive and professional. Use clear, skimmable formatting. Avoid long paragraphs. Always end with "Ask me if you need more details about any specific point!"`
-    });
-
-    // Add image context if provided
+    const userParts: any[] = [];
     if (imageContext) {
-      parts.push({
-        text: 'Here is my skin image for context:'
-      });
-      parts.push({
+      userParts.push({ text: 'Here is my skin image for context:' });
+      userParts.push({
         inlineData: {
           mimeType: 'image/jpeg',
-          data: imageContext.split(',')[1] // Remove data:image/jpeg;base64, prefix
+          data: imageContext.split(',')[1]
         }
       });
     }
+    userParts.push({ text: message });
 
-    // Add the current user message
-    parts.push({
-      text: message
-    });
-
-    console.log('Sending request to Gemini with', parts.length, 'parts');
+    console.log('Sending request to Gemini (v1) with image?', !!imageContext);
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: parts
-        }],
-        generationConfig: {
-          maxOutputTokens: 500,
-          temperature: 0.7,
-        }
-      }),
+        body: JSON.stringify({
+          systemInstruction: {
+            role: 'system',
+            parts: [{ text: systemInstructionText }]
+          },
+          contents: [{
+            role: 'user',
+            parts: userParts
+          }],
+          generationConfig: {
+            maxOutputTokens: 300,
+            temperature: 0.6,
+          }
+        }),
     });
 
     if (!response.ok) {
