@@ -148,20 +148,25 @@ Based on the image analysis AND the user's information above, provide:
 
 Be encouraging, positive, and professional. Address their specific concerns and build upon their current routine if it's good, or suggest improvements. Format your response clearly with headings and bullet points.`;
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          systemInstruction: {
+            role: 'system',
+            parts: [{ text: 'You are a professional skincare expert AI. Analyze facial images for skincare assessment. Be encouraging, positive, and professional. Format your response clearly with headings and bullet points.' }]
+          },
           contents: [{
+            role: 'user',
             parts: [
               {
                 text: personalizedPrompt
               },
               {
-                inline_data: {
-                  mime_type: "image/jpeg",
+                inlineData: {
+                  mimeType: "image/jpeg",
                   data: base64Image
                 }
               }
