@@ -171,25 +171,25 @@ export default function AIChatPage({ onMenuOpen, analysisMessage }: AIChatPagePr
               </div>
             )}
             
-            <Card className={`max-w-xs md:max-w-md shadow-soft ${
+            <Card className={`max-w-[280px] sm:max-w-xs shadow-soft ${
               message.sender === "user" 
                 ? "bg-gradient-primary text-white border-0" 
                 : "bg-surface"
             }`}>
-              <CardContent className="p-4">
+              <CardContent className="p-3">
                 {message.image && (
                   <img 
                     src={message.image} 
                     alt="Skin analysis" 
-                    className="w-full rounded-lg mb-3 shadow-soft"
+                    className="w-full rounded-lg mb-2 shadow-soft"
                   />
                 )}
-                <p className={`text-sm leading-relaxed ${
+                <p className={`text-sm leading-snug ${
                   message.sender === "user" ? "text-white" : "text-foreground"
                 }`}>
                   {message.text}
                 </p>
-                <p className={`text-xs mt-2 text-right ${
+                <p className={`text-xs mt-1.5 text-right ${
                   message.sender === "user" ? "text-white/70" : "text-muted-foreground"
                 }`}>
                   {formatTimestamp(message.timestamp)}

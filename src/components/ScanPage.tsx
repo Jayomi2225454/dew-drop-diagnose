@@ -35,7 +35,7 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
     };
   }, [stream]);
   // Hardcoded API key
-  const geminiApiKey = "AIzaSyB1FoeIdgLNsFlQGNDscaDdxT6rEFskwX4";
+  const geminiApiKey = "AIzaSyCMx11WbilZs1QJPsq-UXQfW6FbIjiC54Q";
 
   const startCamera = async () => {
     try {
