@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ScanPageProps {
   onMenuOpen: () => void;
@@ -34,8 +35,6 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
       }
     };
   }, [stream]);
-  // Hardcoded API key
-  const geminiApiKey = "AIzaSyC1CauLoPpJohm5TmzJQl2_v79qgfFtjTw";
 
   const startCamera = async () => {
     try {
@@ -102,8 +101,8 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
       setStream(null);
       setShowCamera(false);
       
-      // Get image data
-      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      // Get image data with compression
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.7);
       setCapturedImage(imageDataUrl);
     }
   };
@@ -116,84 +115,81 @@ export default function ScanPage({ onMenuOpen, onImageAnalyzed }: ScanPageProps)
     setShowCamera(false);
   };
 
-  const analyzeImageWithGemini = async (imageDataUrl: string) => {
-    if (!geminiApiKey.trim()) {
-      toast.error("Please enter your Gemini API key");
-      return;
-    }
+  const compressImage = (dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 1024;
+        let width = img.width;
+        let height = img.height;
 
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = dataUrl;
+    });
+  };
+
+  const analyzeImageWithGemini = async (imageDataUrl: string) => {
     setIsAnalyzing(true);
     
     try {
-      // Convert data URL to base64
-      const base64Image = imageDataUrl.split(',')[1];
+      const compressedImage = await compressImage(imageDataUrl);
       
-      // Create personalized prompt with questionnaire data
-      const personalizedPrompt = `You are a professional skincare expert AI. Analyze this facial image for skincare assessment.
+      const personalizedPrompt = `Analyze this facial image for skincare assessment.
 
-USER INFORMATION:
+USER INFO:
 - Age: ${answers.age || 'Not specified'}
-- Current skin type belief: ${answers.skinType || 'Not specified'}
-- Main skin concerns: ${answers.concerns || 'Not specified'}
-- Current routine: ${answers.currentRoutine || 'Not specified'}
-- Lifestyle factors: ${answers.lifestyle || 'Not specified'}
+- Skin type: ${answers.skinType || 'Not specified'}
+- Concerns: ${answers.concerns || 'Not specified'}
+- Routine: ${answers.currentRoutine || 'Not specified'}
+- Lifestyle: ${answers.lifestyle || 'Not specified'}
 
-Based on the image analysis AND the user's information above, provide:
-1) Professional skin type assessment (consider their current belief but give your expert opinion)
-2) Visible skin concerns you can identify from the image
-3) Personalized skincare routine (morning & evening) tailored to their age, concerns, and current routine
-4) Specific product recommendations with ingredients that address their concerns
-5) Lifestyle and dietary improvements based on their current habits
-6) Timeline expectations for improvement
+Provide:
+1) Skin type assessment
+2) Visible concerns from image
+3) Personalized routine (morning & evening)
+4) Product recommendations with ingredients
+5) Lifestyle improvements
+6) Timeline for results
 
-Be encouraging, positive, and professional. Address their specific concerns and build upon their current routine if it's good, or suggest improvements. Format your response clearly with headings and bullet points.`;
+Be encouraging and professional.`;
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            role: 'system',
-            parts: [{ text: 'You are a professional skincare expert AI. Analyze facial images for skincare assessment. Be encouraging, positive, and professional. Format your response clearly with headings and bullet points.' }]
-          },
-          contents: [{
-            role: 'user',
-            parts: [
-              {
-                text: personalizedPrompt
-              },
-              {
-                inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Image
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.3,
-            topK: 40,
-            topP: 0.8,
-            maxOutputTokens: 2000,
-          }
-        }),
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: personalizedPrompt,
+          imageContext: compressedImage
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Analysis failed: ${error.message}`);
       }
 
-      const data = await response.json();
-      const analysis = data.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze the image. Please try again.";
+      if (data?.success && data?.response) {
+        onImageAnalyzed(compressedImage, data.response);
+        toast.success("✨ Skin analysis complete! Check your AI chat.");
+      } else if (data?.fallbackResponse) {
+        toast.error(data.fallbackResponse);
+      } else {
+        throw new Error('Invalid response from AI');
+      }
       
-      // Send to chat
-      onImageAnalyzed(imageDataUrl, analysis);
-      
-      toast.success("✨ Skin analysis complete! Check your AI chat for detailed recommendations.");
-      
-      // Reset states
       setCapturedImage(null);
       setShowQuestionnaire(false);
       setAnswers({
@@ -206,7 +202,7 @@ Be encouraging, positive, and professional. Address their specific concerns and 
       
     } catch (error) {
       console.error('Analysis error:', error);
-      toast.error("Failed to analyze image. Please check your API key and try again.");
+      toast.error("Failed to analyze image. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }

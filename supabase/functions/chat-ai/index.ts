@@ -29,17 +29,17 @@ serve(async (req) => {
     console.log('Received chat request:', { message, hasImageContext: !!imageContext });
 
     // Prepare system instruction and user content for Gemini (v1 schema)
-    const systemInstructionText = `You are SkinTell AI, a friendly, expert skincare advisor.
+    const systemInstructionText = `You are SkinTell AI, a friendly skincare advisor.
 
-${imageContext ? `When analyzing skin images, reply compactly (max ~250 words) with:
-- Skin Type: 1 short sentence.
-- Visible Concerns: 3–5 bullets.
-- Simple Routine: 3 steps for morning and 3 for evening (short phrases).
-- Product Tips: 3 bullets with specific ingredients.
-- Lifestyle Tip: 1 short, relevant tip.
-If the image quality is poor, say so briefly and suggest clearer photos or a dermatologist visit.` : `For general skincare questions (no images), answer in 1–2 short paragraphs (max ~140 words). Be direct and practical.`}
+${imageContext ? `For skin images, reply in ~150–180 words:
+- Skin Type: 1 sentence.
+- Concerns: 3–4 bullets.
+- Routine: Morning & evening, 2–3 steps each (short).
+- Products: 2–3 bullets with key ingredients.
+- Lifestyle: 1 tip.
+Use simple words, bullet points. If image is unclear, say so and suggest dermatologist.` : `For text questions, answer in 2–3 short sentences. Be direct and simple.`}
 
-Keep tone supportive and professional. Use concise, skimmable formatting. End with: "Ask me if you need more details about any specific point!"`;
+Keep supportive, professional. End with: "Ask if you need details!"`;
 
     const userParts: any[] = [];
     if (imageContext) {
@@ -70,8 +70,8 @@ Keep tone supportive and professional. Use concise, skimmable formatting. End wi
             parts: userParts
           }],
           generationConfig: {
-            maxOutputTokens: 300,
-            temperature: 0.6,
+            maxOutputTokens: imageContext ? 180 : 120,
+            temperature: 0.4,
           }
         }),
     });
